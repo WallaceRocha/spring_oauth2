@@ -1,10 +1,5 @@
 package com.example.springsocial.config;
 
-import com.example.springsocial.security.*;
-import com.example.springsocial.security.oauth2.CustomOAuth2UserService;
-import com.example.springsocial.security.oauth2.HttpCookieOAuth2AuthorizationRequestRepository;
-import com.example.springsocial.security.oauth2.OAuth2AuthenticationFailureHandler;
-import com.example.springsocial.security.oauth2.OAuth2AuthenticationSuccessHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,9 +13,19 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.oauth2.client.web.AuthorizationRequestRepository;
-import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
+import org.springframework.security.web.access.channel.ChannelProcessingFilter;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.firewall.HttpFirewall;
+
+import com.example.springsocial.security.CustomUserDetailsService;
+import com.example.springsocial.security.RestAuthenticationEntryPoint;
+import com.example.springsocial.security.TokenAuthenticationFilter;
+import com.example.springsocial.security.filter.RequestRejectedExceptionFilter;
+import com.example.springsocial.security.firewall.CustomStrictHttpFirewall;
+import com.example.springsocial.security.oauth2.CustomOAuth2UserService;
+import com.example.springsocial.security.oauth2.HttpCookieOAuth2AuthorizationRequestRepository;
+import com.example.springsocial.security.oauth2.OAuth2AuthenticationFailureHandler;
+import com.example.springsocial.security.oauth2.OAuth2AuthenticationSuccessHandler;
 
 @Configuration
 @EnableWebSecurity
@@ -72,6 +77,13 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
+    
+//    @Bean
+//    public HttpFirewall strictHttpFirewall() {
+//        return new CustomStrictHttpFirewall();
+//    }
+
+ 
 
 
     @Bean(BeanIds.AUTHENTICATION_MANAGER)
@@ -109,7 +121,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                         "/**/*.css",
                         "/**/*.js")
                         .permitAll()
-                    .antMatchers("/auth/**", "/oauth2/**","/home/**")
+                    .antMatchers("/auth/**", "/oauth2/**","/list/**")
                         .permitAll()
                     .anyRequest()
                         .authenticated()
@@ -130,5 +142,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
         // Add our custom Token based authentication filter
         http.addFilterBefore(tokenAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(new RequestRejectedExceptionFilter(),
+                ChannelProcessingFilter.class);
     }
 }
